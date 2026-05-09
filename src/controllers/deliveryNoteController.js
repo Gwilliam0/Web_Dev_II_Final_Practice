@@ -2,7 +2,8 @@ import DeliveryNote from '../models/DeliveryNote.js';
 import Project from '../models/Project.js';
 import User from '../models/User.js';
 import { generateDeliveryNotePDF } from '../services/pdf.service.js';
-import { handleHttpError } from '../utils/handleError.js';
+import { errorHandler } from '../utils/handleError.js';
+import * as CloudinaryService from '../services/cloudinary.service.js';
 
 // Create a new delivery note
 export const create = async (req, res) => {
@@ -20,9 +21,9 @@ export const create = async (req, res) => {
       company: user.company,
       project,
       client,
+      workDate,
       format,
       description,
-      workDate,
       material,
       quantity,
       unit,
@@ -32,13 +33,13 @@ export const create = async (req, res) => {
 
     const io = req.app.get('socketio');
     if (io) {
-      io.to(user.company.toString()).emit('deliverynote:new', newDeliveryNote);
+      io.to(user.company).emit('deliverynote:new', newDeliveryNote);
     }
 
     await newDeliveryNote.save();
     res.status(201).json(newDeliveryNote);
   } catch (err) {
-    handleHttpError(res, 'ERROR_CREATING_DELIVERY_NOTE');
+    errorHandler(err, req, res, 'ERROR_CREATING_DELIVERY_NOTE');
   }
 };
 
@@ -50,7 +51,6 @@ export const getAll = async (req, res) => {
 
     let query = { company: req.user.company, deleted: false };
 
-    // Filtros específicos solicitados
     if (project) query.project = project;
     if (client) query.client = client;
     if (format) query.format = format;
@@ -79,7 +79,7 @@ export const getAll = async (req, res) => {
       notes
     });
   } catch (err) {
-    handleHttpError(res, 'ERROR_FETCHING_DELIVERY_NOTES');
+    errorHandler(err, req, res, 'ERROR_FETCHING_DELIVERY_NOTES');
   }
 };
 
@@ -95,14 +95,13 @@ export const getById = async (req, res) => {
 
     res.json(note);
   } catch (err) {
-    handleHttpError(res, 'ERROR_GETTING_NOTE');
+    errorHandler(err, req, res, 'ERROR_GETTING_NOTE');
   }
 };
 
 // Delete delivery note by ID, only if it belongs to the user's company
 export const erase = async (req, res) => {
   try {
-    const { soft } = req.query;
     const { id } = req.params;
 
     const note = await DeliveryNote.findOne({ _id: id, company: req.user.company });
@@ -110,9 +109,9 @@ export const erase = async (req, res) => {
     if(note.signed) return res.status(400).json({ error: 'Cannot delete a signed delivery note' });
 
     await DeliveryNote.findByIdAndDelete(id);
-    res.json({ message: `Delivery note deleted successfully (${soft === 'true' ? 'soft' : 'hard'})` });
+    res.json({ message: 'Delivery note deleted successfully' });
   } catch (err) {
-    handleHttpError(res, 'ERROR_DELETING_DELIVERY_NOTE');
+    errorHandler(err, req, res, 'ERROR_DELETING_DELIVERY_NOTE');
   }
 };
 
@@ -130,9 +129,9 @@ export const downloadPdf = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=albaran-${note._id}.pdf`);
     await generateDeliveryNotePDF(note, res);
 
-    res.status(501).json({ message: 'PDF Generation logic not implemented yet' });
+    res.status(200).json({ message: 'PDF generated successfully' });
   } catch (err) {
-    handleHttpError(res, 'ERROR_DOWNLOADING_PDF');
+    errorHandler(err, req, res, 'ERROR_DOWNLOADING_PDF');
   }
 };
 
@@ -176,6 +175,6 @@ export const sign = async (req, res) => {
 
     res.json(note);
   } catch (err) {
-    handleHttpError(res, 'ERROR_SIGNING_NOTE');
+    errorHandler(err, req, res, 'ERROR_SIGNING_NOTE');
   }
 };

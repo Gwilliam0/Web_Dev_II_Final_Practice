@@ -94,6 +94,22 @@ router.get('/', authMiddleware, projectController.getAll);
 
 /**
  * @openapi
+ * /api/project/archived:
+ *   get:
+ *     tags:
+ *       - Project
+ *     summary: List archived projects
+ *     description: Retrieves all company projects that have been logically deleted.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of archived projects.
+ */
+router.get('/archived', authMiddleware, projectController.getAllArchived);
+
+/**
+ * @openapi
  * /api/project/{id}:
  *   get:
  *     tags:
@@ -170,22 +186,6 @@ router.put('/:id', authMiddleware, projectController.update);
  *         description: Project deleted or archived.
  */
 router.delete('/:id', authMiddleware, projectController.erase);
-
-/**
- * @openapi
- * /api/project/archived:
- *   get:
- *     tags:
- *       - Project
- *     summary: List archived projects
- *     description: Retrieves all company projects that have been logically deleted.
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of archived projects.
- */
-router.get('/archived', authMiddleware, projectController.getAllArchived);
 
 /**
  * @openapi

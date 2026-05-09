@@ -97,6 +97,21 @@ describe('Client Endpoints', () => {
         });
     });
 
+    describe('GET /api/client/:id', () => {
+        it('should get a client by ID', async () => {
+            const client = await Client.findOne({ company: companyId, deleted: false });
+
+            const res = await request(app)
+                .get(`/api/client/${client._id}`)
+                .set('Authorization', `Bearer ${token}`)
+                .expect(200);
+
+            expect(res.body).toHaveProperty('name');
+            expect(res.body.name).toBe(client.name);
+        });
+    });
+
+
     describe('PUT /api/client/:id', () => {
         it('should update client details', async () => {
             const client = await Client.findOne({ user: userId });
@@ -149,6 +164,67 @@ describe('Client Endpoints', () => {
 
             const deletedClient = await Client.findById(client._id);
             expect(deletedClient).toBeNull();
+        });
+    });
+
+    describe('GET /api/client/archived', () => {
+        it('should list only archived (soft-deleted) clients', async () => {
+            const client = await Client.create({
+                ...testClient,
+                cif: 'B99999999',
+                user: userId,
+                company: companyId,
+                deleted: true
+            });
+
+            const res = await request(app)
+                .get('/api/client/archived')
+                .set('Authorization', `Bearer ${token}`)
+                .expect(200);
+
+            expect(Array.isArray(res.body)).toBe(true);
+            res.body.forEach(c => {
+                expect(c.deleted).toBe(true);
+            });
+            
+            const found = res.body.find(c => c.cif === 'B99999999');
+            expect(found).toBeDefined();
+        });
+
+        it('should filter archived clients by name', async () => {
+            const res = await request(app)
+                .get('/api/client/archived')
+                .set('Authorization', `Bearer ${token}`)
+                .query({ name: 'Test' })
+                .expect(200);
+
+            res.body.forEach(c => {
+                expect(c.name).toMatch(/Test/i);
+            });
+        });
+    });
+
+    describe('PATCH /api/client/:id/restore', () => {
+        it('should restore a soft-deleted client successfully', async () => {
+            const client = await Client.findOne({ company: companyId, deleted: true });
+
+            const res = await request(app)
+                .patch(`/api/client/${client._id}/restore`)
+                .set('Authorization', `Bearer ${token}`)
+                .expect(200);
+
+            expect(res.body.deleted).toBe(false);
+
+            const updatedClient = await Client.findById(client._id);
+            expect(updatedClient.deleted).toBe(false);
+        });
+
+        it('should return 404 when trying to restore a non-existent client', async () => {
+            const fakeId = new mongoose.Types.ObjectId();
+            await request(app)
+                .patch(`/api/client/${fakeId}/restore`)
+                .set('Authorization', `Bearer ${token}`)
+                .expect(404);
         });
     });
 });

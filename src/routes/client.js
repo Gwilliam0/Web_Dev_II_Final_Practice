@@ -83,6 +83,22 @@ router.get('/', authMiddleware, clientController.getAll);
 
 /**
  * @openapi
+ * /api/client/archived:
+ *   get:
+ *     tags:
+ *       - Client
+ *     summary: List archived clients
+ *     description: Retrieves clients that have been marked with logical deletion.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of archived clients.
+ */
+router.get('/archived', authMiddleware, clientController.getAllArchived);
+
+/**
+ * @openapi
  * /api/client/{id}:
  *   get:
  *     tags:
@@ -159,22 +175,6 @@ router.put('/:id', authMiddleware, clientController.update);
  *         description: Client deleted/archived successfully.
  */
 router.delete('/:id', authMiddleware, clientController.erase);
-
-/**
- * @openapi
- * /api/client/archived:
- *   get:
- *     tags:
- *       - Client
- *     summary: List archived clients
- *     description: Retrieves clients that have been marked with logical deletion.
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of archived clients.
- */
-router.get('/archived', authMiddleware, clientController.getAllArchived);
 
 /**
  * @openapi

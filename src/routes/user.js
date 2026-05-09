@@ -261,4 +261,18 @@ router.put('/password', authMiddleware, userController.updatePassword);
  */
 router.post('/invite', authMiddleware, checkRol(['admin']), userController.sendInvite);
 
+/**
+ * @openapi
+ * /api/user/test-slack:
+ *   get:
+ *     tags:
+ *       - User
+ *     summary: Test Slack logging
+ *     description: Triggers a 500 error to test Slack logging functionality.
+ *     responses:
+ *       500:
+ *         description: Internal server error (for testing Slack logging).
+ */
+router.get('/test-slack', userController.testSlackLogging);
+
 export default router;

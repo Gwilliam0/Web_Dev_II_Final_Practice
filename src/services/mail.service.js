@@ -1,11 +1,8 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT || 587,
+  port: process.env.EMAIL_PORT,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -13,27 +10,20 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendVerificationEmail = async (email, code) => {
-  try {
-    const mailOptions = {
-      from: `"BildyApp Support" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Verify your BildyApp account',
-      text: `Welcome! Your verification code is: ${code}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #333;">
-          <h2>Welcome to BildyApp!</h2>
-          <p>Please use the following code to complete your registration:</p>
-          <h1 style="color: #007bff;">${code}</h1>
-          <p>This code is required to activate your account.</p>
-        </div>
-      `,
-    };
+  const mailOptions = {
+    from: '"BildyApp Support" <noreply@bildyapp.com>',
+    to: email,
+    subject: 'Verify your BildyApp account',
+    text: `Welcome to BildyApp! Your verification code is: ${code}`,
+    html: `
+      <div style="font-family: sans-serif; border: 1px solid #eee; padding: 20px;">
+        <h1>Welcome to BildyApp</h1>
+        <p>Thank you for registering. Please use the code below to verify your account:</p>
+        <h2 style="background: #f4f4f4; padding: 10px; display: inline-block;">${code}</h2>
+        <p>This code is required for the <code>/api/user/validation</code> endpoint.</p>
+      </div>
+    `,
+  };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Verification email sent:', info.messageId);
-    return info;
-  } catch (error) {
-    console.error('Error sending email:', error);
-    throw new Error('FAILED_TO_SEND_EMAIL');
-  }
+  return transporter.sendMail(mailOptions);
 };

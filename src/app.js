@@ -9,8 +9,6 @@ import swaggerSpecs from './docs/swagger.js';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
-import morganBody from 'morgan-body';
-import { loggerStream } from './utils/handleLogger.js';
 
 dotenv.config();
 
@@ -29,13 +27,6 @@ io.on('connection', (socket) => {
     socket.join(companyId);
   });
 });
-/*
-morganBody(app, {
-  noColors: true,
-  skip: (req, res) => res.statusCode < 400,
-  stream: loggerStream
-});
-*/
 
 app.use('/api/user', user);
 app.use('/api/client', client);

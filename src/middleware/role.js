@@ -1,4 +1,3 @@
-// src/middleware/rol.middleware.js
 import { handleHttpError } from '../utils/handleError.js';
 
 /**

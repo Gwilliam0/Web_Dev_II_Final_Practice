@@ -1,7 +1,7 @@
 import Client from '../models/Client.js';
 import User from '../models/User.js';
 import RefreshToken from '../models/RefreshToken.js';
-import { handleHttpError } from '../utils/handleError.js';
+import { errorHandler } from '../utils/handleError.js';
 
 // Create a new client
 export const create = async (req, res) => {
@@ -71,7 +71,7 @@ export const getAll = async (req, res) => {
       clients
     });
   } catch (err) {
-    handleHttpError(res, 'ERROR_FETCHING_CLIENTS');
+    errorHandler(err, req, res, 'ERROR_FETCHING_CLIENTS');
   }
 };
 
@@ -125,7 +125,7 @@ export const erase = async (req, res) => {
 
     res.json({ message: `Client deleted successfully (${soft === 'true' ? 'soft' : 'hard'})` });
   } catch (err) {
-    handleHttpError(res, 'ERROR_DELETING_CLIENT');
+    errorHandler(err, req, res, 'ERROR_DELETING_CLIENT');
   }
 };
 
@@ -156,8 +156,8 @@ export const restore = async (req, res) => {
     client.deleted = false;
     await client.save();
     
-    res.json({ message: 'Client restored successfully' });
+    res.json(client, { message: 'Client restored successfully' });
   } catch (err) {
-    handleHttpError(res, 'ERROR_RESTORING_CLIENT');
+    errorHandler(err, req, res, 'ERROR_RESTORING_CLIENT');
   }
 };

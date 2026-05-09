@@ -1,11 +1,8 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
-process.env.NODE_ENV = 'test';
-process.env.PORT = '3000';
-process.env.DB_URI = 'mongodb://memory'; 
-process.env.JWT_SECRET = 'testsecret';
-process.env.JWT_EXPIRES_IN = '2h';
+dotenv.config();
 
 let mongo;
 

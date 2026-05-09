@@ -10,25 +10,23 @@ export const createDeliveryNoteSchema = z.object({
       required_error: "Format must be either 'material' or 'hours'" 
     }),
     description: z.string({ required_error: "Description is required" }).min(5),
-    workDate: z.string().transform((str) => new Date(str)), // Convierte string a objeto Date
+    workDate: z.string().transform((str) => new Date(str)),
     
-    // Campos para formato 'material'
     material: z.string().optional(),
     quantity: z.number().optional(),
     unit: z.string().optional(),
     
-    // Campos para formato 'hours'
     hours: z.number().optional(),
     workers: z.array(z.object({
       name: z.string(),
       hours: z.number()
     })).optional(),
   }).refine((data) => {
-    // Validación condicional: si es material, requiere ciertos campos
+
     if (data.format === 'material') {
       return data.material && data.quantity;
     }
-    // Si es horas, requiere al menos el total de horas
+
     if (data.format === 'hours') {
       return data.hours !== undefined || (data.workers && data.workers.length > 0);
     }

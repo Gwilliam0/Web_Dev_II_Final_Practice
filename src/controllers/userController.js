@@ -1,9 +1,10 @@
 import User from '../models/User.js';
 import Company from '../models/Company.js';
 import { encrypt, compare } from '../utils/handlePassword.js';
-import { handleHttpError } from '../utils/handleError.js';
+import { errorHandler } from '../utils/handleError.js';
 import RefreshToken from '../models/RefreshToken.js';
 import { generateAccessToken, generateRefreshToken, getRefreshTokenExpiry } from '../utils/handleJwt.js';
+import { sendVerificationEmail } from '../services/mail.service.js';
 
 // Login - login to existing user and generate both tokens
 export const login = async (req, res) => {  
@@ -46,10 +47,7 @@ export const register = async (req, res) => {
   try {
     // Verify if email already exists
     const existingUser = await User.findOne({ email: req.body.email });
-    if (existingUser) {
-      handleHttpError(res, 'EMAIL_ALREADY_EXISTS', 409);
-      return;
-    }
+    if (existingUser) return res.status(409).json({ message: 'User already exists' });
     
     // Encrypt password
     const password = await encrypt(req.body.password);
@@ -75,11 +73,16 @@ export const register = async (req, res) => {
       expiresAt: getRefreshTokenExpiry(),
       createdByIp: req.ip
     });
+
+    try {
+      await sendVerificationEmail(dataUser.email, dataUser.verificationCode);
+    } catch (mailError) {
+      console.error("Mail failed to send, but user was created:", mailError);
+    }
     
-    res.status(201).send({ accessToken, refreshToken, user: dataUser });
+    res.status(201).send({ message: "User registered. Please check your email for the validation code.", accessToken, refreshToken, user: dataUser });
   } catch (err) {
-    console.log(err);
-    handleHttpError(res, 'ERROR_REGISTER_USER');
+    errorHandler(err, req, res, 'ERROR_REGISTER_USER');
   }
 };
 
@@ -162,7 +165,7 @@ export const updateProfile = async (req, res, next) => {
     await user.save();
     res.json({ message: 'Profile updated successfully', user });
   } catch (err) {
-    handleHttpError(res, 'ERROR_UPDATING_PROFILE');
+    errorHandler(err, req, res, next);
   }
 };
 
@@ -217,7 +220,7 @@ export const updateLogo = async (req, res) => {
 
     res.json({ message: 'Logo updated successfully', logo: company.logo });
   } catch (err) {
-    handleHttpError(res, 'ERROR_UPDATING_LOGO');
+    errorHandler(err, req, res);
   }
 };
 
@@ -241,7 +244,7 @@ export const deleteAccount = async (req, res) => {
 
     res.json({ message: `User deleted successfully (${soft === 'true' ? 'soft' : 'hard'})` });
   } catch (err) {
-    handleHttpError(res, 'ERROR_DELETING_USER');
+    errorHandler(err, req, res);
   }
 };
 
@@ -260,7 +263,7 @@ export const updatePassword = async (req, res) => {
 
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
-    handleHttpError(res, 'ERROR_UPDATING_PASSWORD');
+    errorHandler(err, req, res);
   }
 };
 
@@ -284,6 +287,13 @@ export const sendInvite = async (req, res) => {
 
     res.status(201).json({ message: 'User invited successfully', user: newUser });
   } catch (err) {
-    handleHttpError(res, 'ERROR_INVITING_USER');
+    errorHandler(err, req, res);
   }
+};
+
+// Test Slack logging by triggering an error
+export const testSlackLogging = (req, res, next) => {
+  const err = new Error("This is a manual test for Slack logging!");
+  err.statusCode = 500;
+  errorHandler(err, req, res);
 };

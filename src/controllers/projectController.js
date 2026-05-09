@@ -1,7 +1,7 @@
 import Project from '../models/Project.js';
 import Client from '../models/Client.js';
 import User from '../models/User.js';
-import { handleHttpError } from '../utils/handleError.js';
+import { errorHandler } from '../utils/handleError.js';
 
 // Create a new project
 export const create = async (req, res) => {
@@ -48,8 +48,8 @@ export const create = async (req, res) => {
 // Get all projects created by the user
 export const getAll = async (req, res) => {
   try {
+    const user = req.user; // Get user
     const { page = 1, limit = 10, name, client, active, sort } = req.query;
-    
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
     let query = { company: user.company, deleted: false };
@@ -74,7 +74,7 @@ export const getAll = async (req, res) => {
       projects
     });
   } catch (err) {
-    handleHttpError(res, 'ERROR_FETCHING_PROJECTS');
+    errorHandler(err, req, res, 'ERROR_FETCHING_PROJECTS');
   }
 };
 
@@ -129,7 +129,7 @@ export const erase = async (req, res) => {
 
     res.json({ message: `Project deleted successfully (${soft === 'true' ? 'soft' : 'hard'})` });
   } catch (err) {
-    handleHttpError(res, 'ERROR_DELETING_PROJECT');
+    errorHandler(err, req, res, 'ERROR_DELETING_PROJECT');
   }
 };
 
@@ -160,8 +160,8 @@ export const restore = async (req, res) => {
     project.deleted = false;
     await project.save();
     
-    res.json({ message: 'Project restored successfully' });
+    res.json(project, { message: 'Project restored successfully' });
   } catch (err) {
-    handleHttpError(res, 'ERROR_RESTORING_PROJECT');
+    errorHandler(err, req, res, 'ERROR_RESTORING_PROJECT');
   }
 };
